@@ -577,7 +577,7 @@
                     <thead>
                         <tr>
                             <th rowspan="2" class="p-3">금액구분</th>
-                            <th colspan="3" class="p-3">심계 등 용역</th>
+                            <th colspan="3" class="p-3">설계용역</th>
                             <th colspan="3" class="p-3">감리 CM 용역</th>
                             <th colspan="2" class="p-3">설계공모</th>
                         </tr>
@@ -662,7 +662,7 @@
                     <label for="technicalServiceCategory" class="block text-gray-700">용역 구분</label>
                     <select id="technicalServiceCategory" onchange="updateTechnicalDetailedTypeOptions()"
                             class="mt-1 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm">
-                        <option value="심계 등 용역">심계 등 용역</option>
+                        <option value="설계용역">설계용역</option>
                         <option value="감리 CM 용역">감리 CM 용역</option>
                         <option value="설계공모">설계공모</option>
                     </select>
@@ -1144,7 +1144,7 @@
 
         // --- Technical Calculator Logic ---
         const technicalFeeRates = {
-            '심계 등 용역': {
+            '설계용역': {
                 '제안': [0.013, 0.011, 0.009, 0.007],
                 'PQ': [0.010, 0.008, 0.006, 0.004],
                 '비PQ': [0.008, 0.006, 0.004, 0.002]
@@ -1271,7 +1271,7 @@
 
         function clearTechnicalInputs() {
             document.getElementById('technicalContractAmount').value = '500,000,000';
-            document.getElementById('technicalServiceCategory').value = '심계 등 용역';
+            document.getElementById('technicalServiceCategory').value = '설계용역';
             // updateDetailedTypeOptions will be called by openTab or DOMContentLoaded
             document.getElementById('technicalCalculatedFee').innerText = '계산된 수수료가 여기에 표시됩니다.';
             document.getElementById('technicalCalculationDetails').innerHTML = '<li>계산 버튼을 누르시면 산출내역이 표시됩니다.</li>';
