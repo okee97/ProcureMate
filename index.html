@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>조달수수료 통합 계산기</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* General Body and Container Styles */
+        body {
+            font-family: 'Inter', 'Malgun Gothic', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+
+        /* Section Headers */
+        .section-header {
+            border-left: 5px solid #3b82f6; /* Tailwind blue-500 */
+            background-color: #eff6ff; /* Tailwind blue-50 */
+            color: #1d4ed8; /* Tailwind blue-800 */
+        }
+
+        /* Calculator Sections */
+        .calculator-section {
+            background-color: #f9fafb; /* Tailwind gray-50 */
+            border: 1px solid #e5e7eb; /* Tailwind gray-200 */
+        }
+        .result-box {
+            background-color: #e2e8f0; /* Tailwind gray-200 */
+            color: #2d3748; /* Tailwind gray-800 */
+        }
+        .note {
+            background-color: #fffbeb; /* Tailwind yellow-50 */
+            border-left: 5px solid #f59e0b; /* Tailwind amber-500 */
+            color: #92400e; /* Tailwind amber-800 */
+        }
+
+        /* Input Group Alignment - Mobile-first approach */
+        .input-group {
+            display: flex;
+            flex-direction: column; /* Default to column for small screens */
+            align-items: flex-start; /* Align label/input to start */
+            margin-bottom: 1rem;
+        }
+        .input-group label {
+            width: 100%; /* Label takes full width on small screens */
+            margin-bottom: 0.5rem; /* Add some space below label */
+            font-weight: 600; /* Semi-bold */
+        }
+        .input-group input,
+        .input-group select {
+            width: 100%; /* Input/select takes full width */
+            flex-grow: 1;
+            margin-bottom: 0;
+            margin-right: 0; /* Remove right margin on stacked elements */
+        }
+        /* Media query for larger screens (sm: 640px and up) */
+        @media (min-width: 640px) {
+            .input-group {
+                flex-direction: row; /* Back to row for larger screens */
+                align-items: center;
+            }
+            .input-group label {
+                flex: 0 0 160px; /* Original fixed width for labels */
+                margin-bottom: 0;
+            }
+            .input-group input,
+            .input-group select {
+                margin-right: 0.5rem; /* Restore right margin */
+            }
+        }
+
+        /* Table Specifics */
+        table, th, td {
+            border: 1px solid #e2e8f0; /* Tailwind gray-200 */
+        }
+        th {
+            background-color: #edf2f7; /* Tailwind gray-100 */
+        }
+        td.align-top {
+            vertical-align: top;
+        }
+        th.w-small {
+            width: 100px; /* Adjust as needed */
+        }
+
+        /* Tab Specific Styles */
+        .tab-button {
+            @apply px-4 py-2 text-sm font-medium text-center text-gray-700 bg-white border border-gray-200 rounded-t-lg hover:bg-gray-100 hover:shadow-sm focus:outline-none;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            border-bottom: none; /* Remove bottom border for tab effect */
+        }
+        .tab-button.active {
+            @apply text-blue-700 bg-blue-50 border-blue-300 shadow-md; /* Added shadow-md for active tab */
+            border-bottom: 2px solid #3b82f6; /* Active tab underline */
+            z-index: 10;
+        }
+        .tab-content {
+            display: none;
+            padding-top: 1rem; /* Adjust as needed */
+            border-top: 1px solid #e2e8f0; /* Separator from tabs */
+        }
+        .tab-content.active {
+            display: block;
+        }
+        /* Ensure tables within tabs are responsive */
+        .tab-content .overflow-x-auto {
+            width: 100%;
+        }
+    </style>
+
+    <!-- PWA Manifest Link -->
+    <link rel="manifest" href="manifest.json">
+    <!-- Apple Touch Icon (for iOS PWA) -->
+    <link rel="apple-touch-icon" href="icon.png">
+
+    <!-- Open Graph Meta Tags for social sharing -->
+    <meta property="og:title" content="ProcureMate - 나라장터 조달수수료 통합 계산기">
+    <meta property="og:description" content="시설공사, 물품/일반용역, 맞춤형서비스, 기술용역 조달수수료를 한 곳에서 계산해보세요.">
+    <meta property="og:image" content="og_image.png">
+    <meta property="og:url" content="YOUR_APP_URL_HERE"> <!-- Replace with your actual app URL -->
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ko_KR">
+    <meta property="og:site_name" content="ProcureMate">
+
+</head>
+<body class="p-5">
+    <div class="container mx-auto bg-white p-6 rounded-lg shadow-xl"> <!-- shadow-md에서 shadow-xl로 변경 -->
+        <h1 class="text-3xl font-bold pb-4 mb-6 border-b border-gray-200 flex items-center">
+            <img src="logo.png" alt="나라장터 로고" class="h-8 mr-3">
+            조달수수료 통합 계산기
+        </h1>
+
+        <!-- Tab Buttons -->
+        <div class="flex border-b border-gray-200 -mb-px">
+            <button id="tabButton_facility" class="tab-button active" onclick="openTab('facility')">시설공사</button>
+            <button id="tabButton_goods" class="tab-button" onclick="openTab('goods')">물품 및 일반용역</button>
+            <button id="tabButton_custom" class="tab-button" onclick="openTab('custom')">맞춤형서비스</button>
+            <button id="tabButton_technical" class="tab-button" onclick="openTab('technical')">기술용역</button>
+        </div>
+
+        <!-- Tab Content Areas -->
+        <div id="tabContent_facility" class="tab-content active">
+            <!-- 시설공사 조달수수료 계산기 HTML -->
+            <div class="section-header p-3 mb-4 mt-6 rounded-md font-bold">
+                <h3>시설공사 조달수수료 요율</h3>
+            </div>
+            <div class="overflow-x-auto mb-6">
+                <table class="w-full text-sm rounded-lg overflow-hidden">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" class="p-3">구분</th>
+                            <th rowspan="2" class="p-3">금액</th>
+                            <th colspan="4" class="p-3">요율(%)</th>
+                            <th rowspan="2" class="p-3">비고</th>
+                        </tr>
+                        <tr>
+                            <th class="p-3">A Type</th>
+                            <th class="p-3">B Type</th>
+                            <th class="p-3">C Type</th>
+                            <th class="p-3">D Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td rowspan="5" class="p-3">공사계약<br>(국가기관)</td>
+                            <td class="p-3">10억원까지</td>
+                            <td class="p-3">0.4</td>
+                            <td class="p-3">0.35</td>
+                            <td class="p-3">0.3</td>
+                            <td class="p-3">0.2</td>
+                            <td rowspan="5" class="p-3 text-left align-top text-xs">
+                                1. 조달청 예정가격 적용<br>
+                                2. A Type<br>
+                                &nbsp;&nbsp;- 종합심사낙찰제(국가)<br>
+                                &nbsp;&nbsp;- 종합평가낙찰제(지자체)<br>
+                                &nbsp;&nbsp;- 기술형입찰의 수의계약(검토가격 작성)<br>
+                                3. B Type<br>
+                                &nbsp;&nbsp;- PQ<br>
+                                &nbsp;&nbsp;- 대안입찰<br>
+                                &nbsp;&nbsp;- 실시설계기술제안입찰<br>
+                                4. C Type<br>
+                                &nbsp;&nbsp;- 비PQ<br>
+                                5. D Type<br>
+                                &nbsp;&nbsp;- 일괄입찰<br>
+                                &nbsp;&nbsp;- 기본설계기술제안입찰<br>
+                                &nbsp;&nbsp;- 기술형입찰의 수의계약(검토가격 미작성)
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="p-3">10억원초과 ~ 50억원까지</td>
+                            <td class="p-3">0.3</td>
+                            <td class="p-3">0.25</td>
+                            <td class="p-3">0.2</td>
+                            <td class="p-3">0.1</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3">50억원초과 ~ 100억원까지</td>
+                            <td class="p-3">0.15</td>
+                            <td class="p-3">0.12</td>
+                            <td class="p-3">0.1</td>
+                            <td class="p-3">0.05</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3">100억원초과 ~ 500억원까지</td>
+                            <td class="p-3">0.07</td>
+                            <td class="p-3">0.06</td>
+                            <td class="p-3">0.05</td>
+                            <td class="p-3">0.02</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3">500억원 초과</td>
+                            <td class="p-3">0.06</td>
+                            <td class="p-3">0.05</td>
+                            <td class="p-3">0.045</td>
+                            <td class="p-3">0.015</td>
+                        </tr>
+                        <tr>
+                            <td rowspan="5" class="p-3">공사계약<br>(지방자치단체)</td>
+                            <td class="p-3">10억원까지</td>
+                            <td class="p-3">0.3</td>
+                            <td class="p-3">0.25</td>
+                            <td class="p-3">0.2</td>
+                            <td class="p-3">0.1</td>
+                            <td rowspan="5" class="p-3">
+                                
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="p-3">10억원초과 ~ 50억원까지</td>
+                            <td class="p-3">0.15</td>
+                            <td class="p-3">0.12</td>
+                            <td class="p-3">0.1</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3">50억원초과 ~ 100억원까지</td>
+                            <td class="p-3">0.07</td>
+                            <td class="p-3">0.06</td>
+                            <td class="p-3">0.05</td>
+                            <td class="p-3">0.02</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3">100억원초과 ~ 500억원까지</td>
+                            <td class="p-3">0.04</td>
+                            <td class="p-3">0.03</td>
+                            <td class="p-3">0.02</td>
+                            <td class="p-3">0.01</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3">500억원 초과</td>
+                            <td class="p-3">0.035</td>
+                            <td class="p-3">0.025</td>
+                            <td class="p-3">0.015</td>
+                            <td class="p-3">0.01</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section-header p-3 mb-4 rounded-md font-bold">
+                <h3>시설공사 수수료를 계산하고 싶으면</h3>
+            </div>
+            <div id="facilityCalculator" class="calculator-section p-6 rounded-md shadow-inner">
+                <div class="input-group">
+                    <label for="facilityContractAmount" class="block text-gray-700">총계약금액</label>
+                    <input type="text" id="facilityContractAmount" value="100,000,000" onkeyup="formatNumberFacility(this)"
+                           class="mt-1 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm">
+                    <span class="text-gray-700">원</span>
+                </div>
+
+                <div class="input-group">
+                    <label for="facilityItemBase" class="block text-gray-700">적용기준</label>
+                    <select id="facilityItemBase"
+                            class="mt-1 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm">
+                        <option value="국가기관">국가기관</option>
+                        <option value="지방자치단체">지방자치단체</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="facilityFeeType" class="block text-gray-700">구분</label>
+                    <select id="facilityFeeType"
+                            class="mt-1 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm">
+                        <option value="A">A Type</option>
+                        <option value="B">B Type</option>
+                        <option value="C">C Type</option>
+                        <option value="D">D Type</option>
+                    </select>
+                </div>
+                
+                <div class="flex space-x-4 mt-4">
+                    <button onclick="calculateFacilityFee()"
+                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
+                        수수료 계산
+                    </button>
+                    <button onclick="clearFacilityInputs()"
+                            class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-md shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
+                        초기화
+                    </button>
+                </div>
+
+                <div id="facilityCalculatedFee" class="result-box mt-6 p-4 rounded-md text-xl font-bold text-center">
+                    계산된 수수료가 여기에 표시됩니다.
+                </div>
+            </div>
+
+            <div class="section-header p-3 mb-4 mt-6 rounded-md font-bold">
+                <h3>산출내역</h3>
+            </div>
+            <div class="calculator-section p-6 rounded-md shadow-inner">
+                <p class="text-lg font-semibold mb-3">총계약금액 (계약금액)</p>
+                <ul id="facilityCalculationDetails" class="list-disc list-inside space-y-2 text-gray-800">
+                    <li>계산 버튼을 누르시면 산출내역이 표시됩니다.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="tabContent_goods" class="tab-content">
+            <!-- 물품 및 일반용역 조달수수료 계산기 HTML -->
+            <div class="section-header p-3 mb-4 mt-6 rounded-md font-bold">
+                <h3>조달수수료 요율표 - 계약구분</h3>
+            </div>
+
+            <div class="overflow-x-auto mb-6">
+                <table class="w-full text-sm rounded-lg overflow-hidden">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" class="p-3">금액구분</th>
+                            <th colspan="2" class="p-3">요율(%)</th>
+                        </tr>
+                        <tr>
+                            <th class="p-3">총액<br>(일반용역포함)</th>
+                            <th class="p-3">단가<br>(일반, 3자, MAS)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="p-3">2천만원까지</td>
+                            <td class="p-3">210,000원 (정액)</td>
+                            <td class="p-3" rowspan="4">0.54 (정률)</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3">2천만원 초과 ~ 5천만원까지</td>
+                            <td class="p-3">530,000원 (정액)</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3">5천만원 초과 ~ 1억원까지</td>
+                            <td class="p-3">1.07 (정률)</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3">1억원 초과 ~ 10억원까지</td>
+                            <td class="p-3">0.76</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3">10억원 초과 ~ 100억원까지</td>
+                            <td class="p-3">0.48</td>
+                            <td class="p-3">0.47</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3">100억원 초과</td>
+                            <td class="p-3">0.38</td>
+                            <td class="p-3">0.37</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section-header p-3 mb-4 rounded-md font-bold">
+                <h3>조달수수료를 계산하고 싶으면</h3>
+            </div>
+            <div id="goodsCalculator" class="calculator-section p-6 rounded-md shadow-inner">
+                <div class="input-group">
+                    <label for="goodsContractAmount" class="block text-gray-700">계약금액</label>
+                    <input type="text" id="goodsContractAmount" value="60,000,000" onkeyup="formatNumberGoods(this)"
+                           class="mt-1 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm">
+                    <span class="text-gray-700">원</span>
+                </div>
+
+                <div class="input-group">
+                    <label for="goodsContractType" class="block text-gray-700">계약구분</label>
+                    <select id="goodsContractType"
+                            class="mt-1 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm">
+                        <option value="총액">총액 (일반용역포함)</option>
+                        <option value="단가">단가 (일반, 3자, MAS)</option>
+                    </select>
+                </div>
+                
+                <div class="flex space-x-4 mt-4">
+                    <button onclick="calculateGoodsFee()"
+                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
+                        수수료 계산
+                    </button>
+                    <button onclick="clearGoodsInputs()"
+                            class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-md shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
+                        초기화
+                    </button>
+                </div>
+
+                <div id="goodsCalculatedFee" class="result-box mt-6 p-4 rounded-md text-xl font-bold text-center">
+                    계산된 수수료가 여기에 표시됩니다.
+                </div>
+            </div>
+
+            <div class="section-header p-3 mb-4 mt-6 rounded-md font-bold">
+                <h3>산출내역</h3>
+            </div>
+            <div class="calculator-section p-6 rounded-md shadow-inner">
+                <p class="text-lg font-semibold mb-3">계약금액</p>
+                <ul id="goodsCalculationDetails" class="list-disc list-inside space-y-2 text-gray-800">
+                    <li>계산 버튼을 누르시면 산출내역이 표시됩니다.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="tabContent_custom" class="tab-content">
+            <!-- 맞춤형서비스 조달수수료 계산기 HTML -->
+            <div class="section-header p-3 mb-4 mt-6 rounded-md font-bold">
+                <h3>조달수수료 요율표</h3>
+            </div>
+
+            <div class="overflow-x-auto mb-6">
+                <table class="w-full text-sm rounded-lg overflow-hidden">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" class="p-3">구분</th>
+                            <th rowspan="2" class="p-3">금액</th>
+                            <th colspan="8" class="p-3">수수료 요율(%)</th>
+                            <th rowspan="2" class="p-3 w-small">비고</th>
+                        </tr>
+                        <tr>
+                            <th class="p-3 w-small">심의대행<br>(일괄·기본)</th>
+                            <th class="p-3 w-small">심의대행<br>(실시·대안)</th>
+                            <th class="p-3 w-small">심의대행<br>(관급자재선정)</th>
+                            <th class="p-3 w-small">심의대행<br>(설계공모)</th>
+                            <th class="p-3 w-small">기획·설계 관리<br>(일반공사)</th>
+                            <th class="p-3 w-small">기획·설계 관리<br>(일괄·기술제안)</th>
+                            <th class="p-3 w-small">시공 관리<br>(건설사업관리)</th>
+                            <th class="p-3 w-small">시공 관리<br>(감독권한대행 등)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="p-3 align-top" rowspan="4">각 서비스별</td>
+                            <td class="p-3">100억원까지</td>
+                            <td class="p-3">-</td>
+                            <td class="p-3">-</td>
+                            <td class="p-3">-</td>
+                            <td class="p-3">-</td>
+                            <td class="p-3">0.462</td>
+                            <td class="p-3">0.396</td>
+                            <td class="p-3">0.846</td>
+                            <td class="p-3">0.677</td>
+                            <td rowspan="8" class="p-3 text-left align-top text-xs">
+                                1. 초과분 체감 적용<br>
+                                2. 사업예산액은 시설비, 설계비, 감리비, 시설 부대비, 공사비 등 공사와 직접 관련된 기타 비용을 말하며, 부지 매입비 및 예비비 등은 제외<br>
+                                3. 사업 관리 중 업무 범위 조정 (사업 중단 포함) 이 있는 경우 수수료는 단위 업무별 구성비율을 적용하여 제공된 서비스 업무량을 기준으로 부과<br>
+                                4. 맞춤형서비스 대행은 기획 설계 관리, 시공 관리 요율을 합산 적용
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="p-3">100억원 초과 ~ 500억원까지</td>
+                            <td class="p-3">0.049</td>
+                            <td class="p-3">0.073</td>
+                            <td class="p-3">0.073</td>
+                            <td class="p-3">0.073</td>
+                            <td class="p-3">0.420</td>
+                            <td class="p-3">0.360</td>
+                            <td class="p-3">0.736</td>
+                            <td class="p-3">0.598</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3">500억원 초과 ~ 1,000억원까지</td>
+                            <td class="p-3">0.041</td>
+                            <td class="p-3">0.067</td>
+                            <td class="p-3">0.067</td>
+                            <td class="p-3">0.067</td>
+                            <td class="p-3">0.336</td>
+                            <td class="p-3">0.288</td>
+                            <td class="p-3">0.626</td>
+                            <td class="p-3">0.501</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3">1,000억원 초과</td>
+                            <td class="p-3">0.037</td>
+                            <td class="p-3">0.056</td>
+                            <td class="p-3">0.056</td>
+                            <td class="p-3">0.056</td>
+                            <td class="p-3">0.302</td>
+                            <td class="p-3">0.259</td>
+                            <td class="p-3">0.562</td>
+                            <td class="p-3">0.450</td>
+                        </tr>
+                        <tr>
+                            <td colspan="10" class="p-3 border-b-0 border-t-0"></td>
+                        </tr>
+                        <tr>
+                            <td colspan="10" class="p-3 border-b-0 border-t-0"></td>
+                        </tr>
+                        <tr>
+                            <td colspan="10" class="p-3 border-b-0 border-t-0"></td>
+                        </tr>
+                        <tr>
+                            <td colspan="10" class="p-3 border-b-0 border-t-0"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section-header p-3 mb-4 rounded-md font-bold">
+                <h3>맞춤형서비스 수수료를 계산하고 싶으면</h3>
+            </div>
+            <div id="customCalculator" class="calculator-section p-6 rounded-md shadow-inner">
+                <div class="input-group">
+                    <label for="customContractAmount" class="block text-gray-700">사업예산액</label>
+                    <input type="text" id="customContractAmount" value="200,000,000,000" onkeyup="formatNumberCustom(this)"
+                           class="mt-1 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm">
+                    <span class="text-gray-700">원</span>
+                </div>
+
+                <div class="input-group">
+                    <label for="customServiceType" class="block text-gray-700">적용 기준</label>
+                    <select id="customServiceType"
+                            class="mt-1 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm">
+                        <option value="심의대행_일괄기본">심의대행(일괄·기본)</option>
+                        <option value="심의대행_실시대안">심의대행(실시·대안)</option>
+                        <option value="심의대행_관급자재선정">관급자재선정(관급자재선정)</option>
+                        <option value="심의대행_설계공모">심의대행(설계공모)</option>
+                        <option value="기획설계관리_일반공사">기획·설계 관리 (일반공사)</option>
+                        <option value="기획설계관리_일괄기술제안">기획·설계 관리 (일괄·기술제안)</option>
+                        <option value="시공관리_건설사업관리">시공 관리 (건설사업관리)</option>
+                        <option value="시공관리_감독권한대행등건설사업관리">시공 관리 (감독권한 대행 등 건설사업관리)</option>
+                    </select>
+                </div>
+                
+                <div class="flex space-x-4 mt-4">
+                    <button onclick="calculateCustomFee()"
+                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
+                        수수료 계산
+                    </button>
+                    <button onclick="clearCustomInputs()"
+                            class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-md shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
+                        초기화
+                    </button>
+                </div>
+
+                <div id="customCalculatedFee" class="result-box mt-6 p-4 rounded-md text-xl font-bold text-center">
+                    계산된 수수료가 여기에 표시됩니다.
+                </div>
+            </div>
+
+            <div class="section-header p-3 mb-4 mt-6 rounded-md font-bold">
+                <h3>산출내역</h3>
+            </div>
+            <div class="calculator-section p-6 rounded-md shadow-inner">
+                <p class="text-lg font-semibold mb-3">사업예산액</p>
+                <ul id="customCalculationDetails" class="list-disc list-inside space-y-2 text-gray-800">
+                    <li>계산 버튼을 누르시면 산출내역이 표시됩니다.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="tabContent_technical" class="tab-content">
+            <!-- 기술용역 조달수수료 계산기 HTML -->
+            <div class="section-header p-3 mb-4 mt-6 rounded-md font-bold">
+                <h3>조달수수료 요율표</h3>
+            </div>
+
+            <div class="overflow-x-auto mb-6">
+                <table class="w-full text-sm rounded-lg overflow-hidden">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" class="p-3">금액구분</th>
+                            <th colspan="3" class="p-3">심계 등 용역</th>
+                            <th colspan="3" class="p-3">감리 CM 용역</th>
+                            <th colspan="2" class="p-3">설계공모</th>
+                        </tr>
+                        <tr>
+                            <th class="p-3">제안</th>
+                            <th class="p-3">PQ</th>
+                            <th class="p-3">비PQ</th>
+                            <th class="p-3">제안</th>
+                            <th class="p-3">PQ</th>
+                            <th class="p-3">비PQ</th>
+                            <th class="p-3">심사포함</th>
+                            <th class="p-3">심사제외</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="p-3">1억원까지</td>
+                            <td class="p-3">1.3</td>
+                            <td class="p-3">1.0</td>
+                            <td class="p-3">0.8</td>
+                            <td class="p-3">1.2</td>
+                            <td class="p-3">0.9</td>
+                            <td class="p-3">0.8</td>
+                            <td class="p-3">1.9</td>
+                            <td class="p-3">0.8</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3">1억원 초과 ~ 10억원까지</td>
+                            <td class="p-3">1.1</td>
+                            <td class="p-3">0.8</td>
+                            <td class="p-3">0.6</td>
+                            <td class="p-3">1.0</td>
+                            <td class="p-3">0.7</td>
+                            <td class="p-3">0.6</td>
+                            <td class="p-3">1.6</td>
+                            <td class="p-3">0.6</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3">10억원 초과 ~ 30억원까지</td>
+                            <td class="p-3">0.9</td>
+                            <td class="p-3">0.6</td>
+                            <td class="p-3">0.4</td>
+                            <td class="p-3">0.8</td>
+                            <td class="p-3">0.5</td>
+                            <td class="p-3">0.4</td>
+                            <td class="p-3">1.3</td>
+                            <td class="p-3">0.4</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3">30억원 초과</td>
+                            <td class="p-3">0.7</td>
+                            <td class="p-3">0.4</td>
+                            <td class="p-3">0.2</td>
+                            <td class="p-3">0.6</td>
+                            <td class="p-3">0.3</td>
+                            <td class="p-3">0.2</td>
+                            <td class="p-3">1.0</td>
+                            <td class="p-3">0.2</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="note p-3 mb-4 rounded-md text-sm">
+                <ul class="list-disc list-inside">
+                    <li>초과 금액 체감 적용</li>
+                    <li>종합 심사 낙찰제 수수료는 제안 요율 적용</li>
+                </ul>
+            </div>
+
+            <div class="section-header p-3 mb-4 rounded-md font-bold">
+                <h3>조달수수료를 계산하고 싶으면</h3>
+            </div>
+            <div id="technicalCalculator" class="calculator-section p-6 rounded-md shadow-inner">
+                <div class="input-group">
+                    <label for="technicalContractAmount" class="block text-gray-700">계약금액</label>
+                    <input type="text" id="technicalContractAmount" value="500,000,000" onkeyup="formatNumberTechnical(this)"
+                           class="mt-1 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm">
+                    <span class="text-gray-700">원</span>
+                </div>
+
+                <div class="input-group">
+                    <label for="technicalServiceCategory" class="block text-gray-700">용역 구분</label>
+                    <select id="technicalServiceCategory" onchange="updateTechnicalDetailedTypeOptions()"
+                            class="mt-1 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm">
+                        <option value="심계 등 용역">심계 등 용역</option>
+                        <option value="감리 CM 용역">감리 CM 용역</option>
+                        <option value="설계공모">설계공모</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="technicalDetailedType" class="block text-gray-700">세부 구분</label>
+                    <select id="technicalDetailedType"
+                            class="mt-1 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm">
+                        <!-- Options will be dynamically loaded by JavaScript -->
+                    </select>
+                </div>
+                
+                <div class="flex space-x-4 mt-4">
+                    <button onclick="calculateTechnicalFee()"
+                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
+                        수수료 계산
+                    </button>
+                    <button onclick="clearTechnicalInputs()"
+                            class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-md shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
+                        초기화
+                    </button>
+                </div>
+
+                <div id="technicalCalculatedFee" class="result-box mt-6 p-4 rounded-md text-xl font-bold text-center">
+                    계산된 수수료가 여기에 표시됩니다.
+                </div>
+            </div>
+
+            <div class="section-header p-3 mb-4 mt-6 rounded-md font-bold">
+                <h3>산출내역</h3>
+            </div>
+            <div class="calculator-section p-6 rounded-md shadow-inner">
+                <p class="text-lg font-semibold mb-3">계약금액</p>
+                <ul id="technicalCalculationDetails" class="list-disc list-inside space-y-2 text-gray-800">
+                    <li>계산 버튼을 누르시면 산출내역이 표시됩니다.</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Tab Management Logic ---
+        function openTab(tabName) {
+            // Deactivate all tab buttons and hide all tab contents
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabButtons.forEach(button => button.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            // Activate the selected tab button and show its content
+            document.getElementById('tabButton_' + tabName).classList.add('active');
+            document.getElementById('tabContent_' + tabName).classList.add('active');
+
+            // Call the corresponding calculator's initialization/calculation function
+            // to ensure its state is correct when displayed.
+            switch (tabName) {
+                case 'facility':
+                    clearFacilityInputs();
+                    calculateFacilityFee();
+                    break;
+                case 'goods':
+                    clearGoodsInputs();
+                    calculateGoodsFee();
+                    break;
+                case 'custom':
+                    clearCustomInputs();
+                    calculateCustomFee();
+                    break;
+                case 'technical':
+                    clearTechnicalInputs(); // Ensure options are updated on first load
+                    updateTechnicalDetailedTypeOptions(); // This will also trigger calculateTechnicalFee
+                    break;
+            }
+        }
+
+        // --- Facility Calculator Logic ---
+        const facilityFeeRates = {
+            '국가기관': {
+                'A': [0.004, 0.003, 0.0015, 0.0007, 0.0006],
+                'B': [0.0035, 0.0025, 0.0012, 0.0006, 0.0005],
+                'C': [0.003, 0.002, 0.001, 0.0005, 0.00045],
+                'D': [0.002, 0.001, 0.0005, 0.0002, 0.00015]
+            },
+            '지방자치단체': {
+                'A': [0.003, 0.0015, 0.0007, 0.0004, 0.00035],
+                'B': [0.0025, 0.0012, 0.0006, 0.0003, 0.00025],
+                'C': [0.002, 0.001, 0.0005, 0.0002, 0.00015],
+                'D': [0.001, 0.0005, 0.0002, 0.0001, 0.0001]
+            }
+        };
+
+        const facilityAmountThresholds = [
+            1_000_000_000,
+            5_000_000_000,
+            10_000_000_000,
+            50_000_000_000,
+            Infinity
+        ];
+
+        function formatNumberFacility(input) {
+            let value = input.value.replace(/,/g, '');
+            if (isNaN(value) || value === '') {
+                input.value = '';
+                return;
+            }
+            input.value = parseFloat(value).toLocaleString('ko-KR');
+        }
+
+        function displayFacilityResults(fee, detailsHtml) {
+            document.getElementById('facilityCalculatedFee').innerText = `총 수수료: ${Math.round(fee).toLocaleString('ko-KR')}원`;
+            document.getElementById('facilityCalculationDetails').innerHTML = detailsHtml.join('');
+            document.getElementById('facilityCalculationDetails').innerHTML += `<p class="note mt-3 p-3 rounded-md text-sm">
+                ※ 위 프로그램은 조달수수료 할인 정책에 따라 수수료 금액이 변경될 수도 있습니다!
+            </p>`;
+        }
+
+        function calculateFacilityFee() {
+            const amountInput = document.getElementById('facilityContractAmount');
+            const amount = parseFloat(amountInput.value.replace(/,/g, ''));
+            const itemBase = document.getElementById('facilityItemBase').value;
+            const feeType = document.getElementById('facilityFeeType').value;
+            const calculationDetailsList = document.getElementById('facilityCalculationDetails');
+            
+            calculationDetailsList.innerHTML = '';
+
+            if (isNaN(amount) || amount <= 0) {
+                document.getElementById('facilityCalculatedFee').innerText = '유효한 금액을 입력해주세요. (0보다 큰 금액)';
+                calculationDetailsList.innerHTML = '<li>유효한 금액을 입력하시면 산출내역이 표시됩니다.</li>';
+                return;
+            }
+
+            let totalFee = 0;
+            let remainingAmount = amount;
+            const currentRates = facilityFeeRates[itemBase][feeType];
+
+            calculationDetailsList.innerHTML += `<li>계약금액 <strong>${amount.toLocaleString('ko-KR')}원</strong> (${itemBase}, ${feeType} 적용) 기준으로 계산합니다.</li>`;
+
+            let prevLimit = 0;
+
+            for (let i = 0; i < facilityAmountThresholds.length; i++) {
+                const currentLimit = facilityAmountThresholds[i];
+                const rate = currentRates[i];
+                let segmentAmount = 0;
+                let segmentFee = 0;
+                let tierDescription = '';
+
+                if (remainingAmount <= 0) {
+                    break;
+                }
+
+                if (i === 0) {
+                    segmentAmount = Math.min(remainingAmount, currentLimit);
+                    tierDescription = `10억원까지`;
+                } else {
+                    const tierRange = currentLimit - prevLimit;
+                    segmentAmount = Math.min(remainingAmount, tierRange);
+                    
+                    if (currentLimit === Infinity) {
+                        tierDescription = `${(prevLimit + 1).toLocaleString('ko-KR')}원 이상 (500억원 초과분)`;
+                        segmentAmount = remainingAmount;
+                    } else {
+                        tierDescription = `${(prevLimit + 1).toLocaleString('ko-KR')}원 초과 ~ ${currentLimit.toLocaleString('ko-KR')}원까지`;
+                    }
+                }
+                
+                segmentFee = segmentAmount * rate;
+                totalFee += segmentFee;
+                remainingAmount -= segmentAmount;
+
+                if (segmentAmount > 0) {
+                    calculationDetailsList.innerHTML += `<li>[${tierDescription}] ${segmentAmount.toLocaleString('ko-KR')}원 &times; ${rate * 100}% = <strong>${Math.round(segmentFee).toLocaleString('ko-KR')}원</strong></li>`;
+                }
+                
+                prevLimit = currentLimit;
+            }
+            displayFacilityResults(totalFee, calculationDetailsList.innerHTML.split('<li>').slice(1).map(item => '<li>' + item)); // Reconstruct detailsHtml for displayResults
+        }
+
+        function clearFacilityInputs() {
+            document.getElementById('facilityContractAmount').value = '100,000,000';
+            document.getElementById('facilityItemBase').value = '국가기관';
+            document.getElementById('facilityFeeType').value = 'A';
+            document.getElementById('facilityCalculatedFee').innerText = '계산된 수수료가 여기에 표시됩니다.';
+            document.getElementById('facilityCalculationDetails').innerHTML = '<li>계산 버튼을 누르시면 산출내역이 표시됩니다.</li>';
+            formatNumberFacility(document.getElementById('facilityContractAmount'));
+        }
+
+        // --- Goods Calculator Logic ---
+        const goodsFeeRates = {
+            '총액': [
+                { lowerLimit: 0, upperLimit: 20_000_000, type: 'fixed', value: 210_000, description: "2천만원까지" },
+                { lowerLimit: 20_000_000, upperLimit: 50_000_000, type: 'fixed', value: 530_000, description: "2천만원 초과 ~ 5천만원까지" },
+                { lowerLimit: 50_000_000, upperLimit: 100_000_000, type: 'percentage_initial_block', value: 0.0107, description: "5천만원 초과 ~ 1억원까지" },
+                { lowerLimit: 100_000_000, upperLimit: 1_000_000_000, type: 'percentage_slice', value: 0.0076, description: "1억원 초과 ~ 10억원까지" },
+                { lowerLimit: 1_000_000_000, upperLimit: 10_000_000_000, type: 'percentage_slice', value: 0.0048, description: "10억원 초과 ~ 100억원까지" },
+                { lowerLimit: 10_000_000_000, upperLimit: Infinity, type: 'percentage_slice', value: 0.0038, description: "100억원 초과" }
+            ],
+            '단가': [
+                { lowerLimit: 0, upperLimit: 1_000_000_000, type: 'percentage_initial_block', value: 0.0054, description: "2천만원까지 ~ 10억원까지 (통합 0.54% 적용)" },
+                { lowerLimit: 1_000_000_000, upperLimit: 10_000_000_000, type: 'percentage_slice', value: 0.0047, description: "10억원 초과 ~ 100억원까지" },
+                { lowerLimit: 10_000_000_000, upperLimit: Infinity, type: 'percentage_slice', value: 0.0037, description: "100억원 초과" }
+            ]
+        };
+
+        function formatNumberGoods(input) {
+            let value = input.value.replace(/,/g, '');
+            if (isNaN(value) || value === '') {
+                input.value = '';
+                return;
+            }
+            input.value = parseFloat(value).toLocaleString('ko-KR');
+        }
+
+        function displayGoodsResults(fee, detailsHtml) {
+            document.getElementById('goodsCalculatedFee').innerText = `총 수수료: ${Math.round(fee).toLocaleString('ko-KR')}원`;
+            document.getElementById('goodsCalculationDetails').innerHTML = detailsHtml.join('');
+            document.getElementById('goodsCalculationDetails').innerHTML += `<p class="note mt-3 p-3 rounded-md text-sm">
+                ※ 위 프로그램은 조달청 고시 요율을 기반으로 작성되었습니다.<br>
+                ※ 세부 계산 방식 및 적용 기준에 따라 실제 수수료와 차이가 발생할 수 있습니다.
+            </p>`;
+        }
+
+        function calculateGoodsFee() {
+            const amountInput = document.getElementById('goodsContractAmount');
+            const amount = parseFloat(amountInput.value.replace(/,/g, ''));
+            const contractType = document.getElementById('goodsContractType').value;
+            const calculationDetailsList = document.getElementById('goodsCalculationDetails');
+            
+            calculationDetailsList.innerHTML = '';
+
+            if (isNaN(amount) || amount <= 0) {
+                document.getElementById('goodsCalculatedFee').innerText = '유효한 계약금액을 입력해주세요. (0보다 큰 금액)';
+                calculationDetailsList.innerHTML = '<li>유효한 계약금액을 입력하시면 산출내역이 표시됩니다.</li>';
+                return;
+            }
+
+            let totalFee = 0;
+            let detailsHtml = [];
+            detailsHtml.push(`<li>계약금액 <strong>${amount.toLocaleString('ko-KR')}원</strong> (${document.getElementById('goodsContractType').options[document.getElementById('goodsContractType').selectedIndex].text} 적용) 기준으로 계산합니다.</li>`);
+            
+            const tiers = goodsFeeRates[contractType];
+            let currentProcessedAmount = 0;
+
+            if (contractType === '총액') {
+                if (amount <= tiers[0].upperLimit) {
+                    totalFee = tiers[0].value;
+                    detailsHtml.push(`<li>[${tiers[0].description}] <strong>${totalFee.toLocaleString('ko-KR')}원 (정액)</strong></li>`);
+                    displayGoodsResults(totalFee, detailsHtml);
+                    return;
+                } else if (amount <= tiers[1].upperLimit) {
+                    totalFee = tiers[1].value;
+                    detailsHtml.push(`<li>[${tiers[1].description}] <strong>${totalFee.toLocaleString('ko-KR')}원 (정액)</strong></li>`);
+                    displayGoodsResults(totalFee, detailsHtml);
+                    return;
+                }
+
+                const firstPercentageTier = tiers[2];
+                let feeForFirstPercentageBlock = 0;
+                let displayAmountForFirstBlock = 0;
+
+                if (amount > firstPercentageTier.lowerLimit) {
+                    if (amount <= firstPercentageTier.upperLimit) {
+                        feeForFirstPercentageBlock = amount * firstPercentageTier.value;
+                        displayAmountForFirstBlock = amount;
+                        detailsHtml.push(`<li>[${firstPercentageTier.description}] ${displayAmountForFirstBlock.toLocaleString('ko-KR')}원 &times; ${(firstPercentageTier.value * 100).toFixed(2)}% = <strong>${Math.round(feeForFirstPercentageBlock).toLocaleString('ko-KR')}원</strong></li>`);
+                        totalFee = feeForFirstPercentageBlock;
+                        displayGoodsResults(totalFee, detailsHtml);
+                        return;
+                    } else {
+                        feeForFirstPercentageBlock = firstPercentageTier.upperLimit * firstPercentageTier.value;
+                        displayAmountForFirstBlock = firstPercentageTier.upperLimit;
+                        detailsHtml.push(`<li>[${firstPercentageTier.description}] ${displayAmountForFirstBlock.toLocaleString('ko-KR')}원 &times; ${(firstPercentageTier.value * 100).toFixed(2)}% = <strong>${Math.round(feeForFirstPercentageBlock).toLocaleString('ko-KR')}원</strong></li>`);
+                        totalFee += feeForFirstPercentageBlock;
+                        currentProcessedAmount = firstPercentageTier.upperLimit;
+                    }
+                }
+
+                for (let i = 3; i < tiers.length; i++) {
+                    const tier = tiers[i];
+                    const tierUpperLimit = tier.upperLimit;
+                    const tierRate = tier.value;
+                    const tierDescription = tier.description;
+
+                    if (amount <= currentProcessedAmount) break;
+
+                    let segmentAmount = Math.min(amount, tierUpperLimit) - currentProcessedAmount;
+                    
+                    if (segmentAmount > 0 && tier.type === 'percentage_slice') {
+                        const segmentFee = segmentAmount * tierRate;
+                        totalFee += segmentFee;
+                        detailsHtml.push(`<li>[${tierDescription}] ${segmentAmount.toLocaleString('ko-KR')}원 &times; ${(tierRate * 100).toFixed(2)}% = <strong>${Math.round(segmentFee).toLocaleString('ko-KR')}원</strong></li>`);
+                        currentProcessedAmount += segmentAmount;
+                    }
+                }
+                displayGoodsResults(totalFee, detailsHtml);
+                return;
+
+            } else if (contractType === '단가') {
+                const firstTierForUnit = tiers[0];
+                let feeForFirstBlockUnit = 0;
+                let displayAmountForFirstBlockUnit = 0;
+
+                if (amount <= firstTierForUnit.upperLimit) {
+                    feeForFirstBlockUnit = amount * firstTierForUnit.value;
+                    displayAmountForFirstBlockUnit = amount;
+                    detailsHtml.push(`<li>[${firstTierForUnit.description}] ${displayAmountForFirstBlockUnit.toLocaleString('ko-KR')}원 &times; ${(firstTierForUnit.value * 100).toFixed(2)}% = <strong>${Math.round(feeForFirstBlockUnit).toLocaleString('ko-KR')}원</strong></li>`);
+                    totalFee = feeForFirstBlockUnit;
+                    displayGoodsResults(totalFee, detailsHtml);
+                    return;
+                } else {
+                    feeForFirstBlockUnit = firstTierForUnit.upperLimit * firstTierForUnit.value;
+                    displayAmountForFirstBlockUnit = firstTierForUnit.upperLimit;
+                    detailsHtml.push(`<li>[${firstTierForUnit.description}] ${displayAmountForFirstBlockUnit.toLocaleString('ko-KR')}원 &times; ${(firstTierForUnit.value * 100).toFixed(2)}% = <strong>${Math.round(feeForFirstBlockUnit).toLocaleString('ko-KR')}원</strong></li>`);
+                    totalFee += feeForFirstBlockUnit;
+                    currentProcessedAmount = firstTierForUnit.upperLimit;
+                }
+
+                for (let i = 1; i < tiers.length; i++) {
+                    const tier = tiers[i];
+                    const tierUpperLimit = tier.upperLimit;
+                    const tierRate = tier.value;
+                    const tierDescription = tier.description;
+
+                    if (amount <= currentProcessedAmount) break;
+
+                    let segmentAmount = Math.min(amount, tierUpperLimit) - currentProcessedAmount;
+                    
+                    if (segmentAmount > 0 && tier.type === 'percentage_slice') {
+                        const segmentFee = segmentAmount * tierRate;
+                        totalFee += segmentFee;
+                        detailsHtml.push(`<li>[${tierDescription}] ${segmentAmount.toLocaleString('ko-KR')}원 &times; ${(tierRate * 100).toFixed(2)}% = <strong>${Math.round(segmentFee).toLocaleString('ko-KR')}원</strong></li>`);
+                        currentProcessedAmount += segmentAmount;
+                    }
+                }
+                displayGoodsResults(totalFee, detailsHtml);
+                return;
+            }
+        }
+
+        function clearGoodsInputs() {
+            document.getElementById('goodsContractAmount').value = '60,000,000';
+            document.getElementById('goodsContractType').value = '총액';
+            document.getElementById('goodsCalculatedFee').innerText = '계산된 수수료가 여기에 표시됩니다.';
+            document.getElementById('goodsCalculationDetails').innerHTML = '<li>계산 버튼을 누르시면 산출내역이 표시됩니다.</li>';
+            formatNumberGoods(document.getElementById('goodsContractAmount'));
+        }
+
+        // --- Custom Calculator Logic ---
+        const customFeeRates = {
+            '심의대행_일괄기본': [
+                { upperLimit: 10_000_000_000, rate: 0.000, description: "100억원까지" },
+                { upperLimit: 50_000_000_000, rate: 0.00049, description: "100억원 초과 ~ 500억원까지" },
+                { upperLimit: 100_000_000_000, rate: 0.00041, description: "500억원 초과 ~ 1,000억원까지" },
+                { upperLimit: Infinity, rate: 0.00037, description: "1,000억원 초과" }
+            ],
+            '심의대행_실시대안': [
+                { upperLimit: 10_000_000_000, rate: 0.000, description: "100억원까지" },
+                { upperLimit: 50_000_000_000, rate: 0.00073, description: "100억원 초과 ~ 500억원까지" },
+                { upperLimit: 100_000_000_000, rate: 0.00067, description: "500억원 초과 ~ 1,000억원까지" },
+                { upperLimit: Infinity, rate: 0.00056, description: "1,000억원 초과" }
+            ],
+            '심의대행_관급자재선정': [
+                { upperLimit: 10_000_000_000, rate: 0.000, description: "100억원까지" },
+                { upperLimit: 50_000_000_000, rate: 0.00073, description: "100억원 초과 ~ 500억원까지" },
+                { upperLimit: 100_000_000_000, rate: 0.00067, description: "500억원 초과 ~ 1,000억원까지" },
+                { upperLimit: Infinity, rate: 0.00056, description: "1,000억원 초과" }
+            ],
+            '심의대행_설계공모': [
+                { upperLimit: 10_000_000_000, rate: 0.000, description: "100억원까지" },
+                { upperLimit: 50_000_000_000, rate: 0.00073, description: "100억원 초과 ~ 500억원까지" },
+                { upperLimit: 100_000_000_000, rate: 0.00067, description: "500억원 초과 ~ 1,000억원까지" },
+                { upperLimit: Infinity, rate: 0.00056, description: "1,000억원 초과" }
+            ],
+            '기획설계관리_일반공사': [
+                { upperLimit: 10_000_000_000, rate: 0.00462, description: "100억원까지" },
+                { upperLimit: 50_000_000_000, rate: 0.00420, description: "100억원 초과 ~ 500억원까지" },
+                { upperLimit: 100_000_000_000, rate: 0.00336, description: "500억원 초과 ~ 1,000억원까지" },
+                { upperLimit: Infinity, rate: 0.00302, description: "1,000억원 초과" }
+            ],
+            '기획설계관리_일괄기술제안': [
+                { upperLimit: 10_000_000_000, rate: 0.00396, description: "100억원까지" },
+                { upperLimit: 50_000_000_000, rate: 0.00360, description: "100억원 초과 ~ 500억원까지" },
+                { upperLimit: 100_000_000_000, rate: 0.00288, description: "500억원 초과 ~ 1,000억원까지" },
+                { upperLimit: Infinity, rate: 0.00259, description: "1,000억원 초과" }
+            ],
+            '시공관리_건설사업관리': [
+                { upperLimit: 10_000_000_000, rate: 0.00846, description: "100억원까지" },
+                { upperLimit: 50_000_000_000, rate: 0.00736, description: "100억원 초과 ~ 500억원까지" },
+                { upperLimit: 100_000_000_000, rate: 0.00626, description: "500억원 초과 ~ 1,000억원까지" },
+                { upperLimit: Infinity, rate: 0.00562, description: "1,000억원 초과" }
+            ],
+            '시공관리_감독권한대행등건설사업관리': [
+                { upperLimit: 10_000_000_000, rate: 0.00677, description: "100억원까지" },
+                { upperLimit: 50_000_000_000, rate: 0.00598, description: "100억원 초과 ~ 500억원까지" },
+                { upperLimit: 100_000_000_000, rate: 0.00501, description: "500억원 초과 ~ 1,000억원까지" },
+                { upperLimit: Infinity, rate: 0.00450, description: "1,000억원 초과" }
+            ]
+        };
+
+        function formatNumberCustom(input) {
+            let value = input.value.replace(/,/g, '');
+            if (isNaN(value) || value === '') {
+                input.value = '';
+                return;
+            }
+            input.value = parseFloat(value).toLocaleString('ko-KR');
+        }
+
+        function displayCustomResults(fee, detailsHtml) {
+            document.getElementById('customCalculatedFee').innerText = `총 수수료: ${Math.round(fee).toLocaleString('ko-KR')}원`;
+            document.getElementById('customCalculationDetails').innerHTML = detailsHtml.join('');
+            document.getElementById('customCalculationDetails').innerHTML += `<p class="note mt-3 p-3 rounded-md text-sm">
+                ※ 이 프로그램은 조달청 고시 제 2024-17호 (2024.10.1.시행)의 요율을 기반으로 작성되었습니다.<br>
+                ※ 사업 관리 중 업무 범위 조정 (사업 중단 포함) 이 있는 경우 수수료는 단위 업무별 구성비율을 적용하여 제공된 서비스 업무량을 기준으로 부과됩니다.<br>
+                ※ 맞춤형서비스 수수료는 사업예산액 외에 기타 조건에 따라 변경될 수 있습니다.
+            </p>`;
+        }
+
+        function calculateCustomFee() {
+            const amountInput = document.getElementById('customContractAmount');
+            const amount = parseFloat(amountInput.value.replace(/,/g, ''));
+            const serviceType = document.getElementById('customServiceType').value;
+            const calculationDetailsList = document.getElementById('customCalculationDetails');
+            
+            calculationDetailsList.innerHTML = '';
+
+            if (isNaN(amount) || amount <= 0) {
+                document.getElementById('customCalculatedFee').innerText = '유효한 사업예산액을 입력해주세요. (0보다 큰 금액)';
+                calculationDetailsList.innerHTML = '<li>유효한 사업예산액을 입력하시면 산출내역이 표시됩니다.</li>';
+                return;
+            }
+
+            let totalFee = 0;
+            let currentProcessedAmount = 0;
+            const tiers = customFeeRates[serviceType];
+
+            calculationDetailsList.innerHTML += `<li>사업예산액 <strong>${amount.toLocaleString('ko-KR')}원</strong> (${document.getElementById('customServiceType').options[document.getElementById('customServiceType').selectedIndex].text} 적용) 기준으로 계산합니다.</li>`;
+
+            if (serviceType.startsWith('심의대행') && amount <= 10_000_000_000) {
+                document.getElementById('customCalculatedFee').innerText = `총 수수료: 0원 (심의대행은 100억원 초과부터 요율 적용)`;
+                calculationDetailsList.innerHTML = `<li>심의대행은 100억원 초과부터 요율이 적용되므로, 해당 사업예산액에 대한 수수료는 0원입니다.</li>`;
+                return;
+            }
+
+            for (let i = 0; i < tiers.length; i++) {
+                const tier = tiers[i];
+                const tierUpperLimit = tier.upperLimit;
+                const tierRate = tier.rate;
+                const tierDescription = tier.description;
+
+                let amountInThisTierSegment = Math.min(amount, tierUpperLimit) - currentProcessedAmount;
+
+                if (amountInThisTierSegment <= 0) {
+                    if (currentProcessedAmount >= amount) {
+                        break;
+                    }
+                    continue;
+                }
+
+                const segmentFee = amountInThisTierSegment * tierRate;
+                totalFee += segmentFee;
+                currentProcessedAmount += amountInThisTierSegment;
+
+                calculationDetailsList.innerHTML += `<li>[${tierDescription}] ${amountInThisTierSegment.toLocaleString('ko-KR')}원 &times; ${tierRate * 100}% = <strong>${Math.round(segmentFee).toLocaleString('ko-KR')}원</strong></li>`;
+            }
+            displayCustomResults(totalFee, calculationDetailsList.innerHTML.split('<li>').slice(1).map(item => '<li>' + item)); // Reconstruct detailsHtml
+        }
+
+        function clearCustomInputs() {
+            document.getElementById('customContractAmount').value = '200,000,000,000';
+            document.getElementById('customServiceType').value = '시공관리_감독권한대행등건설사업관리';
+            document.getElementById('customCalculatedFee').innerText = '계산된 수수료가 여기에 표시됩니다.';
+            document.getElementById('customCalculationDetails').innerHTML = '<li>계산 버튼을 누르시면 산출내역이 표시됩니다.</li>';
+            formatNumberCustom(document.getElementById('customContractAmount'));
+        }
+
+        // --- Technical Calculator Logic ---
+        const technicalFeeRates = {
+            '심계 등 용역': {
+                '제안': [0.013, 0.011, 0.009, 0.007],
+                'PQ': [0.010, 0.008, 0.006, 0.004],
+                '비PQ': [0.008, 0.006, 0.004, 0.002]
+            },
+            '감리 CM 용역': {
+                '제안': [0.012, 0.010, 0.008, 0.006],
+                'PQ': [0.009, 0.007, 0.005, 0.003],
+                '비PQ': [0.008, 0.006, 0.004, 0.002]
+            },
+            '설계공모': {
+                '심사포함': [0.019, 0.016, 0.013, 0.010],
+                '심사제외': [0.008, 0.006, 0.004, 0.002]
+            }
+        };
+
+        const technicalAmountThresholds = [
+            100_000_000,
+            1_000_000_000,
+            3_000_000_000,
+            Infinity
+        ];
+
+        const technicalAmountDescriptions = [
+            "1억원까지",
+            "1억원 초과 ~ 10억원까지",
+            "10억원 초과 ~ 30억원까지",
+            "30억원 초과"
+        ];
+
+        function formatNumberTechnical(input) {
+            let value = input.value.replace(/,/g, '');
+            if (isNaN(value) || value === '') {
+                input.value = '';
+                return;
+            }
+            input.value = parseFloat(value).toLocaleString('ko-KR');
+        }
+
+        function updateTechnicalDetailedTypeOptions() {
+            const serviceCategorySelect = document.getElementById('technicalServiceCategory');
+            const detailedTypeSelect = document.getElementById('technicalDetailedType');
+            const selectedCategory = serviceCategorySelect.value;
+
+            detailedTypeSelect.innerHTML = '';
+
+            const detailedTypes = Object.keys(technicalFeeRates[selectedCategory]);
+            detailedTypes.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type;
+                detailedTypeSelect.appendChild(option);
+            });
+            calculateTechnicalFee(); // Recalculate after options update
+        }
+
+        function displayTechnicalResults(fee, detailsHtml) {
+            document.getElementById('technicalCalculatedFee').innerText = `총 수수료: ${Math.round(fee).toLocaleString('ko-KR')}원`;
+            document.getElementById('technicalCalculationDetails').innerHTML = detailsHtml.join('');
+            document.getElementById('technicalCalculationDetails').innerHTML += `<p class="note mt-3 p-3 rounded-md text-sm">
+                ※ 위 프로그램은 조달청 고시 요율을 기반으로 작성되었습니다.<br>
+                ※ 세부 계산 방식 및 적용 기준에 따라 실제 수수료와 차이가 발생할 수 있습니다.
+            </p>`;
+        }
+
+        function calculateTechnicalFee() {
+            const amountInput = document.getElementById('technicalContractAmount');
+            const amount = parseFloat(amountInput.value.replace(/,/g, ''));
+            const serviceCategory = document.getElementById('technicalServiceCategory').value;
+            const detailedType = document.getElementById('technicalDetailedType').value;
+            const calculationDetailsList = document.getElementById('technicalCalculationDetails');
+            
+            calculationDetailsList.innerHTML = '';
+
+            if (isNaN(amount) || amount <= 0) {
+                document.getElementById('technicalCalculatedFee').innerText = '유효한 계약금액을 입력해주세요. (0보다 큰 금액)';
+                calculationDetailsList.innerHTML = '<li>유효한 계약금액을 입력하시면 산출내역이 표시됩니다.</li>';
+                return;
+            }
+            if (!serviceCategory || !detailedType) {
+                 document.getElementById('technicalCalculatedFee').innerText = '용역 구분 및 세부 구분을 선택해주세요.';
+                 calculationDetailsList.innerHTML = '<li>용역 구분 및 세부 구분을 선택하시면 산출내역이 표시됩니다.</li>';
+                 return;
+            }
+
+            let totalFee = 0;
+            let remainingAmount = amount;
+            const currentRates = technicalFeeRates[serviceCategory][detailedType];
+
+            let detailsHtml = [];
+            detailsHtml.push(`<li>계약금액 <strong>${amount.toLocaleString('ko-KR')}원</strong> (${serviceCategory} - ${detailedType} 적용) 기준으로 계산합니다.</li>`);
+
+            let prevLimit = 0;
+
+            for (let i = 0; i < technicalAmountThresholds.length; i++) {
+                const currentLimit = technicalAmountThresholds[i];
+                const rate = currentRates[i];
+                let segmentAmount = 0;
+                let segmentFee = 0;
+                const tierDescription = technicalAmountDescriptions[i];
+
+                if (remainingAmount <= 0) {
+                    break;
+                }
+
+                if (i === 0) {
+                    segmentAmount = Math.min(remainingAmount, currentLimit);
+                } else {
+                    const tierRange = currentLimit - prevLimit;
+                    segmentAmount = Math.min(remainingAmount, tierRange);
+                }
+                
+                segmentFee = segmentAmount * rate;
+                totalFee += segmentFee;
+                remainingAmount -= segmentAmount;
+
+                if (segmentAmount > 0) {
+                    detailsHtml.push(`<li>[${tierDescription}] ${segmentAmount.toLocaleString('ko-KR')}원 &times; ${(rate * 100).toFixed(1)}% = <strong>${Math.round(segmentFee).toLocaleString('ko-KR')}원</strong></li>`);
+                }
+                
+                prevLimit = currentLimit;
+            }
+            displayTechnicalResults(totalFee, detailsHtml);
+        }
+
+        function clearTechnicalInputs() {
+            document.getElementById('technicalContractAmount').value = '500,000,000';
+            document.getElementById('technicalServiceCategory').value = '심계 등 용역';
+            // updateDetailedTypeOptions will be called by openTab or DOMContentLoaded
+            document.getElementById('technicalCalculatedFee').innerText = '계산된 수수료가 여기에 표시됩니다.';
+            document.getElementById('technicalCalculationDetails').innerHTML = '<li>계산 버튼을 누르시면 산출내역이 표시됩니다.</li>';
+            formatNumberTechnical(document.getElementById('technicalContractAmount'));
+            updateTechnicalDetailedTypeOptions(); // Ensure correct detailed type is set
+        }
+
+        // --- Initial Load Logic ---
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initially open the first tab (Facility Construction)
+            openTab('facility'); 
+        });
+
+    </script>
+</body>
+</html>
