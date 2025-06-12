@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>조달수수료 통합 계산기</title>
+    <title>나라장터 조달수수료 통합 계산기</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         /* General Body and Container Styles */
@@ -90,17 +90,22 @@
             width: 100px; /* Adjust as needed */
         }
 
-        /* Tab Specific Styles */
+        /* Tab Specific Styles (Improved) */
         .tab-button {
-            @apply px-4 py-2 text-sm font-medium text-center text-gray-700 bg-white border border-gray-200 rounded-t-lg hover:bg-gray-100 hover:shadow-sm focus:outline-none;
+            @apply px-5 py-3 text-sm font-semibold text-center text-gray-700 bg-white border border-gray-200 rounded-t-xl hover:bg-gray-100 hover:shadow-md focus:outline-none;
             cursor: pointer;
             transition: all 0.2s ease-in-out;
             border-bottom: none; /* Remove bottom border for tab effect */
+            margin-bottom: -1px; /* Slightly overlap the bottom border for a cleaner look */
+            position: relative; /* For z-index and active effect */
+            z-index: 1; /* Default z-index */
+            margin-right: 1.0rem; /* Added space between buttons */
         }
         .tab-button.active {
-            @apply text-blue-700 bg-blue-50 border-blue-300 shadow-md; /* Added shadow-md for active tab */
-            border-bottom: 2px solid #3b82f6; /* Active tab underline */
-            z-index: 10;
+            @apply text-blue-700 bg-blue-50 border-blue-300 shadow-lg; /* Stronger shadow, softer active background */
+            border-bottom: 4px solid #3b82f6; /* Thicker active tab underline */
+            z-index: 10; /* Bring active tab to front */
+            transform: translateY(-2px); /* Slight lift effect */
         }
         .tab-content {
             display: none;
@@ -132,8 +137,8 @@
 
 </head>
 <body class="p-5">
-    <div class="container mx-auto bg-white p-6 rounded-lg shadow-xl"> <!-- shadow-md에서 shadow-xl로 변경 -->
-        <h1 class="text-3xl font-bold pb-4 mb-6 border-b border-gray-200 flex items-center">
+    <div class="container mx-auto bg-white p-6 rounded-lg shadow-xl">
+        <h1 class="text-2xl font-bold pb-4 mb-6 border-b border-gray-200 flex items-center">
             <img src="logo.png" alt="나라장터 로고" class="h-8 mr-3">
             조달수수료 통합 계산기
         </h1>
@@ -141,7 +146,7 @@
         <!-- Tab Buttons -->
         <div class="flex border-b border-gray-200 -mb-px">
             <button id="tabButton_facility" class="tab-button active" onclick="openTab('facility')">시설공사</button>
-            <button id="tabButton_goods" class="tab-button" onclick="openTab('goods')">물품 및 일반용역</button>
+            <button id="tabButton_goods" class="tab-button" onclick="openTab('goods')">물품·일반용역</button>
             <button id="tabButton_custom" class="tab-button" onclick="openTab('custom')">맞춤형서비스</button>
             <button id="tabButton_technical" class="tab-button" onclick="openTab('technical')">기술용역</button>
         </div>
@@ -309,6 +314,17 @@
                 <div id="facilityCalculatedFee" class="result-box mt-6 p-4 rounded-md text-xl font-bold text-center">
                     계산된 수수료가 여기에 표시됩니다.
                 </div>
+
+                <!-- Gemini API Feature for Facility -->
+                <div class="mt-6">
+                    <button onclick="generateFacilityExplanation()"
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
+                        ✨ 수수료 설명 생성
+                    </button>
+                    <div id="facilityExplanation" class="mt-4 p-4 bg-gray-100 rounded-md text-sm text-gray-800 hidden">
+                        설명 생성 중...
+                    </div>
+                </div>
             </div>
 
             <div class="section-header p-3 mb-4 mt-6 rounded-md font-bold">
@@ -405,6 +421,17 @@
 
                 <div id="goodsCalculatedFee" class="result-box mt-6 p-4 rounded-md text-xl font-bold text-center">
                     계산된 수수료가 여기에 표시됩니다.
+                </div>
+
+                <!-- Gemini API Feature for Goods -->
+                <div class="mt-6">
+                    <button onclick="generateGoodsExplanation()"
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
+                        ✨ 수수료 설명 생성
+                    </button>
+                    <div id="goodsExplanation" class="mt-4 p-4 bg-gray-100 rounded-md text-sm text-gray-800 hidden">
+                        설명 생성 중...
+                    </div>
                 </div>
             </div>
 
@@ -553,6 +580,17 @@
                 <div id="customCalculatedFee" class="result-box mt-6 p-4 rounded-md text-xl font-bold text-center">
                     계산된 수수료가 여기에 표시됩니다.
                 </div>
+
+                <!-- Gemini API Feature for Custom -->
+                <div class="mt-6">
+                    <button onclick="generateCustomExplanation()"
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
+                        ✨ 수수료 설명 생성
+                    </button>
+                    <div id="customExplanation" class="mt-4 p-4 bg-gray-100 rounded-md text-sm text-gray-800 hidden">
+                        설명 생성 중...
+                    </div>
+                </div>
             </div>
 
             <div class="section-header p-3 mb-4 mt-6 rounded-md font-bold">
@@ -577,7 +615,7 @@
                     <thead>
                         <tr>
                             <th rowspan="2" class="p-3">금액구분</th>
-                            <th colspan="3" class="p-3">설계용역</th>
+                            <th colspan="3" class="p-3">설계 등 용역</th>
                             <th colspan="3" class="p-3">감리 CM 용역</th>
                             <th colspan="2" class="p-3">설계공모</th>
                         </tr>
@@ -662,7 +700,7 @@
                     <label for="technicalServiceCategory" class="block text-gray-700">용역 구분</label>
                     <select id="technicalServiceCategory" onchange="updateTechnicalDetailedTypeOptions()"
                             class="mt-1 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm">
-                        <option value="설계용역">설계용역</option>
+                        <option value="설계 등 용역">설계 등 용역</option>
                         <option value="감리 CM 용역">감리 CM 용역</option>
                         <option value="설계공모">설계공모</option>
                     </select>
@@ -689,6 +727,17 @@
 
                 <div id="technicalCalculatedFee" class="result-box mt-6 p-4 rounded-md text-xl font-bold text-center">
                     계산된 수수료가 여기에 표시됩니다.
+                </div>
+
+                <!-- Gemini API Feature for Technical -->
+                <div class="mt-6">
+                    <button onclick="generateTechnicalExplanation()"
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
+                        ✨ 수수료 설명 생성
+                    </button>
+                    <div id="technicalExplanation" class="mt-4 p-4 bg-gray-100 rounded-md text-sm text-gray-800 hidden">
+                        설명 생성 중...
+                    </div>
                 </div>
             </div>
 
@@ -851,6 +900,8 @@
             document.getElementById('facilityCalculatedFee').innerText = '계산된 수수료가 여기에 표시됩니다.';
             document.getElementById('facilityCalculationDetails').innerHTML = '<li>계산 버튼을 누르시면 산출내역이 표시됩니다.</li>';
             formatNumberFacility(document.getElementById('facilityContractAmount'));
+            document.getElementById('facilityExplanation').classList.add('hidden'); // Hide explanation on clear
+            document.getElementById('facilityExplanation').innerText = '설명 생성 중...'; // Reset text
         }
 
         // --- Goods Calculator Logic ---
@@ -1011,6 +1062,8 @@
             document.getElementById('goodsCalculatedFee').innerText = '계산된 수수료가 여기에 표시됩니다.';
             document.getElementById('goodsCalculationDetails').innerHTML = '<li>계산 버튼을 누르시면 산출내역이 표시됩니다.</li>';
             formatNumberGoods(document.getElementById('goodsContractAmount'));
+            document.getElementById('goodsExplanation').classList.add('hidden'); // Hide explanation on clear
+            document.getElementById('goodsExplanation').innerText = '설명 생성 중...'; // Reset text
         }
 
         // --- Custom Calculator Logic ---
@@ -1140,11 +1193,13 @@
             document.getElementById('customCalculatedFee').innerText = '계산된 수수료가 여기에 표시됩니다.';
             document.getElementById('customCalculationDetails').innerHTML = '<li>계산 버튼을 누르시면 산출내역이 표시됩니다.</li>';
             formatNumberCustom(document.getElementById('customContractAmount'));
+            document.getElementById('customExplanation').classList.add('hidden'); // Hide explanation on clear
+            document.getElementById('customExplanation').innerText = '설명 생성 중...'; // Reset text
         }
 
         // --- Technical Calculator Logic ---
         const technicalFeeRates = {
-            '설계용역': {
+            '설계 등 용역': {
                 '제안': [0.013, 0.011, 0.009, 0.007],
                 'PQ': [0.010, 0.008, 0.006, 0.004],
                 '비PQ': [0.008, 0.006, 0.004, 0.002]
@@ -1271,18 +1326,130 @@
 
         function clearTechnicalInputs() {
             document.getElementById('technicalContractAmount').value = '500,000,000';
-            document.getElementById('technicalServiceCategory').value = '설계용역';
+            document.getElementById('technicalServiceCategory').value = '설계 등 용역';
             // updateDetailedTypeOptions will be called by openTab or DOMContentLoaded
             document.getElementById('technicalCalculatedFee').innerText = '계산된 수수료가 여기에 표시됩니다.';
             document.getElementById('technicalCalculationDetails').innerHTML = '<li>계산 버튼을 누르시면 산출내역이 표시됩니다.</li>';
             formatNumberTechnical(document.getElementById('technicalContractAmount'));
             updateTechnicalDetailedTypeOptions(); // Ensure correct detailed type is set
+            document.getElementById('technicalExplanation').classList.add('hidden'); // Hide explanation on clear
+            document.getElementById('technicalExplanation').innerText = '설명 생성 중...'; // Reset text
+        }
+
+        // --- Gemini API Integration Functions ---
+        async function callGeminiAPI(prompt, outputElementId) {
+            const outputElement = document.getElementById(outputElementId);
+            outputElement.classList.remove('hidden');
+            outputElement.innerHTML = '설명 생성 중... <span class="animate-pulse">...</span>'; // Loading indicator
+
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+            const payload = { contents: chatHistory };
+            const apiKey = ""; // If you want to use models other than gemini-2.0-flash or imagen-3.0-generate-002, provide an API key here. Otherwise, leave this as-is.
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    outputElement.innerText = text;
+                } else {
+                    outputElement.innerText = '설명을 생성할 수 없습니다. 다시 시도해 주세요.';
+                    console.error('Gemini API response structure unexpected:', result);
+                }
+            } catch (error) {
+                outputElement.innerText = 'API 호출 중 오류가 발생했습니다: ' + error.message;
+                console.error('Error calling Gemini API:', error);
+            }
+        }
+
+        async function generateFacilityExplanation() {
+            const amount = parseFloat(document.getElementById('facilityContractAmount').value.replace(/,/g, ''));
+            const itemBase = document.getElementById('facilityItemBase').value;
+            const feeType = document.getElementById('facilityFeeType').value;
+            const calculatedFee = document.getElementById('facilityCalculatedFee').innerText.replace('총 수수료: ', '').replace('원', '').replace(/,/g, '');
+
+            if (isNaN(amount) || amount <= 0 || isNaN(calculatedFee)) {
+                document.getElementById('facilityExplanation').classList.remove('hidden');
+                document.getElementById('facilityExplanation').innerText = '정확한 설명을 위해 유효한 계약금액과 계산된 수수료가 필요합니다.';
+                return;
+            }
+
+            const prompt = `시설공사 조달수수료에 대해 설명해 주세요. 계약금액은 ${amount.toLocaleString('ko-KR')}원이고, 적용기준은 '${itemBase}', 구분은 '${feeType} Type'이며, 계산된 총 수수료는 ${calculatedFee}원입니다. 이 수수료가 어떻게 산출되었는지에 대해 일반인이 이해하기 쉽게, 누진세 방식과 해당 요율 구간을 포함하여 간략하게 설명해 주세요. 요율표에 기반한 설명을 제공하되, "조달청 고시"와 같은 법규 참조는 제외하고 순수하게 계산 방식에 집중하여 설명해 주세요.`;
+            await callGeminiAPI(prompt, 'facilityExplanation');
+        }
+
+        async function generateGoodsExplanation() {
+            const amount = parseFloat(document.getElementById('goodsContractAmount').value.replace(/,/g, ''));
+            const contractType = document.getElementById('goodsContractType').options[document.getElementById('goodsContractType').selectedIndex].text;
+            const calculatedFee = document.getElementById('goodsCalculatedFee').innerText.replace('총 수수료: ', '').replace('원', '').replace(/,/g, '');
+
+            if (isNaN(amount) || amount <= 0 || isNaN(calculatedFee)) {
+                document.getElementById('goodsExplanation').classList.remove('hidden');
+                document.getElementById('goodsExplanation').innerText = '정확한 설명을 위해 유효한 계약금액과 계산된 수수료가 필요합니다.';
+                return;
+            }
+
+            const prompt = `물품 및 일반용역 조달수수료에 대해 설명해 주세요. 계약금액은 ${amount.toLocaleString('ko-KR')}원이고, 계약구분은 '${contractType}'이며, 계산된 총 수수료는 ${calculatedFee}원입니다. 이 수수료가 어떻게 산출되었는지에 대해 일반인이 이해하기 쉽게, 정액 또는 정률 방식과 해당 요율 구간을 포함하여 간략하게 설명해 주세요. 요율표에 기반한 설명을 제공하되, "조달청 고시"와 같은 법규 참조는 제외하고 순수하게 계산 방식에 집중하여 설명해 주세요.`;
+            await callGeminiAPI(prompt, 'goodsExplanation');
+        }
+
+        async function generateCustomExplanation() {
+            const amount = parseFloat(document.getElementById('customContractAmount').value.replace(/,/g, ''));
+            const serviceType = document.getElementById('customServiceType').options[document.getElementById('customServiceType').selectedIndex].text;
+            const calculatedFee = document.getElementById('customCalculatedFee').innerText.replace('총 수수료: ', '').replace('원', '').replace(/,/g, '');
+
+            if (isNaN(amount) || amount <= 0 || isNaN(calculatedFee)) {
+                document.getElementById('customExplanation').classList.remove('hidden');
+                document.getElementById('customExplanation').innerText = '정확한 설명을 위해 유효한 사업예산액과 계산된 수수료가 필요합니다.';
+                return;
+            }
+
+            const prompt = `맞춤형서비스 조달수수료에 대해 설명해 주세요. 사업예산액은 ${amount.toLocaleString('ko-KR')}원이고, 적용 기준은 '${serviceType}'이며, 계산된 총 수수료는 ${calculatedFee}원입니다. 이 수수료가 어떻게 산출되었는지에 대해 일반인이 이해하기 쉽게, 초과분 체감 적용 방식과 해당 요율 구간을 포함하여 간략하게 설명해 주세요. 요율표에 기반한 설명을 제공하되, "조달청 고시"와 같은 법규 참조는 제외하고 순수하게 계산 방식에 집중하여 설명해 주세요.`;
+            await callGeminiAPI(prompt, 'customExplanation');
+        }
+
+        async function generateTechnicalExplanation() {
+            const amount = parseFloat(document.getElementById('technicalContractAmount').value.replace(/,/g, ''));
+            const serviceCategory = document.getElementById('technicalServiceCategory').value;
+            const detailedType = document.getElementById('technicalDetailedType').value;
+            const calculatedFee = document.getElementById('technicalCalculatedFee').innerText.replace('총 수수료: ', '').replace('원', '').replace(/,/g, '');
+
+            if (isNaN(amount) || amount <= 0 || isNaN(calculatedFee)) {
+                document.getElementById('technicalExplanation').classList.remove('hidden');
+                document.getElementById('technicalExplanation').innerText = '정확한 설명을 위해 유효한 계약금액과 계산된 수수료가 필요합니다.';
+                return;
+            }
+
+            const prompt = `기술용역 조달수수료에 대해 설명해 주세요. 계약금액은 ${amount.toLocaleString('ko-KR')}원이고, 용역 구분은 '${serviceCategory}', 세부 구분은 '${detailedType}'이며, 계산된 총 수수료는 ${calculatedFee}원입니다. 이 수수료가 어떻게 산출되었는지에 대해 일반인이 이해하기 쉽게, 초과 금액 체감 적용 방식과 해당 요율 구간을 포함하여 간략하게 설명해 주세요. 요율표에 기반한 설명을 제공하되, "조달청 고시"와 같은 법규 참조는 제외하고 순수하게 계산 방식에 집중하여 설명해 주세요.`;
+            await callGeminiAPI(prompt, 'technicalExplanation');
         }
 
         // --- Initial Load Logic ---
         document.addEventListener('DOMContentLoaded', function() {
             // Initially open the first tab (Facility Construction)
             openTab('facility'); 
+
+            // Service Worker registration removed to avoid "URL protocol not supported" error in certain environments.
+            // if ('serviceWorker' in navigator) {
+            //     window.addEventListener('load', () => {
+            //         navigator.serviceWorker.register('./sw.js') 
+            //             .then(registration => {
+            //                 console.log('Service Worker registered: ', registration);
+            //             })
+            //             .catch(error => {
+            //                 console.error('Service Worker registration failed: ', error);
+            //             });
+            //     });
+            // }
         });
 
     </script>
